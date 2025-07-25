@@ -5,12 +5,6 @@ import os
 import boto3
 from datetime import date
 
-# —————————————————————————————————————————————————————————————————————
-# Configure root logger to emit INFO‑level messages
-# —————————————————————————————————————————————————————————————————————
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
 
 def lambda_handler(event, context):
     """
@@ -25,7 +19,6 @@ def lambda_handler(event, context):
     # DynamoDB table name must be supplied via env‑var TABLE_NAME
     table_name = os.environ.get("TABLE_NAME")
     if not table_name:
-        logger.error("Missing TABLE_NAME environment variable")
         return {"error": "TABLE_NAME not configured"}
 
     # Initialize DynamoDB resource and select the target table
@@ -36,22 +29,18 @@ def lambda_handler(event, context):
     try:
         resp = table.get_item(Key={"date": today_str})
     except Exception as e:
-        logger.error(f"Error fetching item from DynamoDB: {e}")
         return {"error": "Database lookup failed"}
 
     # 2) Cache hit: remove the 'date' key and return the rest of the data
     if "Item" in resp:
         item = resp["Item"]
         item.pop("date", None)
-        logger.info(f"Cache hit: returning data from DynamoDB for date {today_str}")
         return item
 
     # 3) Cache miss → fetch fresh data from Hack The Box API
     item = {"date": today_str}
-    logger.info(f"No DynamoDB entry for {today_str}, fetching from HTB API")
     data = get_rankings_from_htb()
     if data is None:
-        logger.error("Failed to fetch rankings from HTB")
         table.put_item(Item=item)
         return {"error": "Could not retrieve rankings"}
 
@@ -59,12 +48,10 @@ def lambda_handler(event, context):
     item.update(data)
     try:
         table.put_item(Item=item)
-        logger.info(f"Stored fresh HTB data in DynamoDB under key {today_str}")
     except Exception as e:
-        logger.error(f"Error writing item to DynamoDB: {e}")
+        return {"error": f"Error writing item to DynamoDB: {e}"}
         # Even if caching fails, return the fetched data
 
-    logger.info("Returning fresh data from HTB API")
     return data
 
 
@@ -104,10 +91,8 @@ def get_rankings_from_htb():
 
     # 1) Fetch basic user profile
     USER_DATA = requests.get(f"{USER_URL}{USER_ID}", headers=HEADERS)
-    logger.info(f"USERDATA status code: {USER_DATA.status_code}")
     if USER_DATA.status_code == 200:
         profile = USER_DATA.json().get("profile", {})
-        logger.info(f"USERDATA profile: {profile}")
 
         USERNAME = profile.get("name")
         COUNTRYCODE = profile.get("country_code")
