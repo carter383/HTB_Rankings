@@ -47,14 +47,15 @@ def lambda_handler(event, context):
         return item
 
     # 3) Cache miss → fetch fresh data from Hack The Box API
+    item = {"date": today_str}
     logger.info(f"No DynamoDB entry for {today_str}, fetching from HTB API")
     data = get_rankings_from_htb()
     if data is None:
         logger.error("Failed to fetch rankings from HTB")
+        table.put_item(Item=item)
         return {"error": "Could not retrieve rankings"}
 
     # 4) Build the new item (including today's date) and write it back
-    item = {"date": today_str}
     item.update(data)
     try:
         table.put_item(Item=item)
