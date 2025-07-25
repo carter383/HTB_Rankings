@@ -5,6 +5,8 @@ import os
 import boto3
 from datetime import date
 
+dynamodb = boto3.resource("dynamodb")
+
 
 def lambda_handler(event, context):
     """
@@ -15,14 +17,13 @@ def lambda_handler(event, context):
     """
     # ISO‑formatted string for today (used as the DynamoDB partition key)
     today_str = date.today().isoformat()
-
     # DynamoDB table name must be supplied via env‑var TABLE_NAME
     table_name = os.environ.get("TABLE_NAME")
     if not table_name:
         return {"error": "TABLE_NAME not configured"}
 
     # Initialize DynamoDB resource and select the target table
-    dynamodb = boto3.resource("dynamodb")
+
     table = dynamodb.Table(table_name)
 
     # 1) Attempt to fetch today’s record from DynamoDB
@@ -34,7 +35,6 @@ def lambda_handler(event, context):
     # 2) Cache hit: remove the 'date' key and return the rest of the data
     if "Item" in resp:
         item = resp["Item"]
-        item.pop("date", None)
         return item
 
     # 3) Cache miss → fetch fresh data from Hack The Box API
