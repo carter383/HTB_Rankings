@@ -70,7 +70,9 @@ def get_rankings_from_htb():
     # Base URLs for HTB API calls
     LOCAL_RANKINGS_URL = "https://labs.hackthebox.com/api/v4/rankings/country/"
     USER_URL = "https://labs.hackthebox.com/api/v4/user/profile/basic/"
-
+    CHALLENGE_URL = (
+        "https://labs.hackthebox.com/api/v4/user/profile/progress/challenges/"
+    )
     # Must have both TOKEN and USER_ID to proceed
     if APP_TOKEN is None or USER_ID is None:
         return None
@@ -116,5 +118,9 @@ def get_rankings_from_htb():
             if ranking.get("name") == USERNAME:
                 User_Info["Local_Rank"] = ranking.get("rank")
                 break
-
+    Challenge_data = requests.get(f"{CHALLENGE_URL}{USER_ID}", headers=HEADERS)
+    if Challenge_data.status_code == 200:
+        User_Info["Challenge_Owns"] = Challenge_data.json()["profile"][
+            "challenge_owns"
+        ]["solved"]
     return User_Info
