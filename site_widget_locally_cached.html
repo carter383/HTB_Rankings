@@ -1,0 +1,126 @@
+<style>
+  /* Center wrapper for the card */
+  .card-container {
+    text-align: center;
+    margin: 2rem 0;
+  }
+  /* Shrink‑wrapped, centered card */
+  .card {
+    display: inline-block;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .card h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  .fields {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    white-space: nowrap;
+  }
+  .field {
+    flex: 0 0 auto;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+  }
+  .field .label {
+    display: block;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .field .value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #222;
+  }
+  .loading {
+    font-style: italic;
+    color: #888;
+  }
+</style>
+
+<div class="card-container">
+  <div class="card">
+    <h2>Hack The Box Stats</h2>
+    <div id="output" class="fields">
+      <div class="loading">Loading data...</div>
+    </div>
+  </div>
+</div>
+<script>
+  async function fetchAndDisplay(url) {
+    const COUNTRY_PREFIX = "UK";
+    const LOCAL_RANK_LABEL = `${COUNTRY_PREFIX} Rank`;
+    const container = document.getElementById("output");
+    function getTTLExpiry() {
+      return Date.now() + 12 * 60 * 60 * 1000; // 12 hours in ms
+    }
+    const cached = localStorage.getItem("rankCache");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() < parsed.expiry) {
+          displayData(parsed.data);
+          return;
+        }
+      } catch (e) {
+        console.warn("Cache error", e);
+      }
+    }
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      localStorage.setItem(
+        "rankCache",
+        JSON.stringify({
+          data,
+          expiry: getTTLExpiry(),
+        })
+      );
+
+      displayData(data);
+    } catch (err) {
+      container.innerHTML = '<div class="loading">Error loading stats</div>';
+      console.error(err);
+    }
+
+    function displayData(data) {
+      const mapping = {
+        Rank: data.Rank,
+        "Global Rank": data.User_Global_Rank,
+        [LOCAL_RANK_LABEL]: data.Local_Rank,
+        "System Owns": data.System_Owns,
+        "User Owns": data.User_Owns,
+        "Challenge Owns": data.Challenge_Owns,
+        "System Bloods": data.System_Bloods,
+        "User Bloods": data.User_Bloods,
+      };
+      container.innerHTML = "";
+      for (const [label, val] of Object.entries(mapping)) {
+        const div = document.createElement("div");
+        div.className = "field";
+        div.innerHTML = `<span class="label">${label}</span><span class="value">${val}</span>`;
+        container.appendChild(div);
+      }
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    fetchAndDisplay("<LAMBDA FUNCTION URL>");
+  });
+</script>
