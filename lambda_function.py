@@ -7,6 +7,8 @@ from datetime import date
 
 dynamodb = boto3.resource("dynamodb")
 
+data_cache = {}
+
 
 def lambda_handler(event, context):
     """
@@ -15,6 +17,9 @@ def lambda_handler(event, context):
     2. If present, strip out the 'date' key and return the rest.
     3. On cache miss, fetch fresh data from the HTB API, cache it, and return it.
     """
+    global data_cache
+    if data_cache != {}:
+        return data_cache
     # ISO‑formatted string for today (used as the DynamoDB partition key)
     today_str = date.today().isoformat()
     # DynamoDB table name must be supplied via env‑var TABLE_NAME
@@ -35,6 +40,7 @@ def lambda_handler(event, context):
     # 2) Cache hit: remove the 'date' key and return the rest of the data
     if "Item" in resp:
         item = resp["Item"]
+        data_cache = item
         return item
 
     # 3) Cache miss → fetch fresh data from Hack The Box API
@@ -46,12 +52,12 @@ def lambda_handler(event, context):
 
     # 4) Build the new item (including today's date) and write it back
     item.update(data)
+    data_cache = data
     try:
         table.put_item(Item=item)
     except Exception as e:
         return {"error": f"Error writing item to DynamoDB: {e}"}
         # Even if caching fails, return the fetched data
-
     return data
 
 
