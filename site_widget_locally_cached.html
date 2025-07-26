@@ -1,65 +1,135 @@
-<style>
-  /* Center wrapper for the card */
-  .card-container {
-    text-align: center;
-    margin: 2rem 0;
-  }
-  /* Shrink‑wrapped, centered card */
-  .card {
-    display: inline-block;
-    background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    margin: 0 auto;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  .card h2 {
-    font-size: 1.4rem;
-    margin-bottom: 1rem;
-    color: #333;
-  }
-  .fields {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    white-space: nowrap;
-  }
-  .field {
-    flex: 0 0 auto;
-    background: #f9f9f9;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 8px 12px;
-    text-align: center;
-  }
-  .field .label {
-    display: block;
-    font-size: 0.85rem;
-    color: #666;
-    margin-bottom: 4px;
-  }
-  .field .value {
-    display: block;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #222;
-  }
-  .loading {
-    font-style: italic;
-    color: #888;
-  }
-</style>
+ <style>
+    :root {
+      --card-bg: #ffffff;
+      --card-radius: 12px;
+      --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --gap: 1rem;
+      --field-bg: #f5f5f5;
+      --field-border: #e0e0e0;
+      --text-primary: #222222;
+      --text-secondary: #555555;
+      --text-muted: #888888;
+      --font-base: 'Segoe UI', Roboto, sans-serif;
+    }
 
-<div class="card-container">
-  <div class="card">
-    <h2>Hack The Box Stats</h2>
-    <div id="output" class="fields">
-      <div class="loading">Loading data...</div>
+    body {
+      margin: 0;
+      font-family: var(--font-base);
+      background-color: #fafafa;
+      color: var(--text-primary);
+    }
+
+    .card-container {
+      display: flex;
+      justify-content: center;
+      padding: 2rem var(--gap);
+    }
+
+    /* DESKTOP: full‑width card within the padded container */
+    .card {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--card-bg);
+      padding: calc(var(--gap) * 2);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .card h2 {
+      margin: 0 0 var(--gap);
+      font-size: 1.6rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* DESKTOP: one‑line flex, equal widths */
+    .fields {
+      display: flex;
+      gap: var(--gap);
+    }
+    .field {
+      flex: 1;                       /* equal share of the row */
+      background: var(--field-bg);
+      border: 1px solid var(--field-border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+      transition: background 0.2s ease;
+    }
+    .field:hover {
+      background: #eaeaea;
+    }
+
+    .label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .loading {
+      font-style: italic;
+      color: var(--text-muted);
+      width: 100%;
+      text-align: center;
+    }
+
+    .card p {
+      margin-top: var(--gap);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .card a {
+      color: #0066cc;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .card a:hover {
+      text-decoration: underline;
+    }
+
+    /* MOBILE (≤600px): switch to wrapped grid */
+    @media (max-width: 600px) {
+      .card {
+        padding: var(--gap);
+      }
+      .card h2 {
+        font-size: 1.3rem;
+      }
+      .value {
+        font-size: 1rem;
+      }
+
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: var(--gap);
+      }
+      .loading {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card-container">
+    <div class="card">
+      <h2>Hack The Box Stats</h2>
+      <div id="output" class="fields">
+        <div class="loading">Loading data...</div>
+      </div>
     </div>
   </div>
-</div>
 <script>
   async function fetchAndDisplay(url) {
     const COUNTRY_PREFIX = "UK";
